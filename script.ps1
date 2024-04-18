@@ -5,6 +5,8 @@ function Show-Menu {
     Write-Host "1) Ubuntu 22.04.4 Server"
     Write-Host "2) Debian 12.5"
     Write-Host "3) Fedora Server 39"
+    Write-Host "4) Kali Linux 2024.1"
+    Write-Host "5) Red Hat Enterprise Linux 9.3"
     Write-Host "Q) Quit"
     Write-Host ""
     $choice = Read-Host "Enter your choice"
@@ -60,7 +62,6 @@ function Create-HyperVVM {
     }
 }
 
-
 # Main script
 $choice = Show-Menu
 
@@ -84,6 +85,20 @@ switch ($choice) {
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
             Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\fedora-server-39.iso"
+        }
+    }
+    "4" {
+        Download-ISO -url "https://cdimage.kali.org/kali-2024.1/kali-linux-2024.1-installer-netinst-amd64.iso" -outputPath "$env:USERPROFILE\Downloads\kali-linux-2024.1.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\kali-linux-2024.1.iso"
+        }
+    }
+    "5" {
+        Download-ISO -url "https://developers.redhat.com/content-gateway/file/rhel/Red_Hat_Enterprise_Linux_9.3/rhel-9.3-x86_64-boot.iso" -outputPath "$env:USERPROFILE\Downloads\rhel-9.3-x86_64-boot.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\rhel-9.3-x86_64-boot.iso"
         }
     }
     "Q" {

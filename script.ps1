@@ -19,18 +19,32 @@ function Download-ISO {
         [string]$url,
         [string]$outputPath
     )
-    if (-not (Test-Path $outputPath)) {
+
+    $webClient = New-Object System.Net.WebClient
+    $uri = New-Object System.Uri($url)
+    $fileName = [System.IO.Path]::GetFileName($uri.LocalPath)
+    $destination = Join-Path -Path $outputPath -ChildPath $fileName
+
+    if (-not (Test-Path $destination)) {
         try {
-            $webClient = New-Object System.Net.WebClient
-            $webClient.DownloadFile($url, $outputPath)
-            Write-Host "ISO downloaded successfully to $outputPath"
+            $webClient.DownloadFileAsync($uri, $destination)
+            Write-Host "Downloading $fileName..."
+            $webClient.Add_DownloadProgressChanged({
+                $percentage = [math]::Round($_.BytesReceived / $_.TotalBytesToReceive * 100, 2)
+                $downloadedMB = [math]::Round($_.BytesReceived / 1MB, 2)
+                $totalMB = [math]::Round($_.TotalBytesToReceive / 1MB, 2)
+                Write-Host "Downloaded $downloadedMB MB out of $totalMB MB ($percentage%)"
+            })
+            $webClient.DownloadFileCompleted = {
+                Write-Host "Download completed."
+            }
         }
         catch {
             Write-Host "Error downloading the ISO: $_.Exception.Message"
         }
     }
     else {
-        Write-Host "ISO already exists at $outputPath"
+        Write-Host "ISO already exists at $destination"
     }
 }
 
@@ -49,9 +63,23 @@ function Create-HyperVVM {
     }
     $cpuCores = 2
     $secureBoot = "Off"
-    
+
+    # Get the list of available Hyper-V switches
+    $switches = Get-VMSwitch | Select-Object -ExpandProperty Name
+    $switchMenu = @{}
+    for ($i = 0; $i -lt $switches.Count; $i++) {
+        $switchMenu.Add(($i + 1).ToString(), $switches[$i])
+        Write-Host "$($i + 1): $($switches[$i])"
+    }
+    $switchChoice = Read-Host "Enter the number of the Hyper-V switch you want to use (or press Enter for default switch)"
+    if ($switchChoice -and $switchMenu.ContainsKey($switchChoice)) {
+        $switch = $switchMenu[$switchChoice]
+    } else {
+        $switch = "Default Switch"
+    }
+
     try {
-        New-VM -Name $vmName -MemoryStartupBytes $ram -BootDevice CD -Path $env:USERPROFILE\Documents\Hyper-V\VirtualMachines -Generation 2 -Verbose
+        New-VM -Name $vmName -MemoryStartupBytes $ram -BootDevice CD -Path $env:USERPROFILE\Documents\Hyper-V\VirtualMachines -Generation 2 -SwitchName $switch -Verbose
         Set-VMFirmware -VMName $vmName -EnableSecureBoot $secureBoot
         Set-VMProcessor -VMName $vmName -Count $cpuCores
         Set-VMDvdDrive -VMName $vmName -Path $isoPath
@@ -67,35 +95,35 @@ $choice = Show-Menu
 
 switch ($choice) {
     "1" {
-        Download-ISO -url "https://releases.ubuntu.com/22.04.4/ubuntu-22.04.4-live-server-amd64.iso" -outputPath "$env:USERPROFILE\Downloads\ubuntu-22.04.4.iso"
+        Download-ISO -url "https://releases.ubuntu.com/22.04.4/ubuntu-22.04.4-live-server-amd64.iso" -outputPath "$env:USERPROFILE\Downloads"
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
-            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\ubuntu-22.04.4.iso"
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\ubuntu-22.04.4-live-server-amd64.iso"
         }
     }
     "2" {
-        Download-ISO -url "https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-12.5.0-amd64-DVD-1.iso" -outputPath "$env:USERPROFILE\Downloads\debian-12.5.iso"
+        Download-ISO -url "https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-12.5.0-amd64-DVD-1.iso" -outputPath "$env:USERPROFILE\Downloads"
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
-            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\debian-12.5.iso"
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\debian-12.5.0-amd64-DVD-1.iso"
         }
     }
     "3" {
-        Download-ISO -url "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/x86_64/iso/Fedora-Server-dvd-x86_64-39-1.5.iso" -outputPath "$env:USERPROFILE\Downloads\fedora-server-39.iso"
+        Download-ISO -url "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/x86_64/iso/Fedora-Server-dvd-x86_64-39-1.5.iso" -outputPath "$env:USERPROFILE\Downloads"
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
-            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\fedora-server-39.iso"
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\Fedora-Server-dvd-x86_64-39-1.5.iso"
         }
     }
     "4" {
-        Download-ISO -url "https://cdimage.kali.org/kali-2024.1/kali-linux-2024.1-installer-netinst-amd64.iso" -outputPath "$env:USERPROFILE\Downloads\kali-linux-2024.1.iso"
+        Download-ISO -url "https://cdimage.kali.org/kali-2024.1/kali-linux-2024.1-installer-netinst-amd64.iso" -outputPath "$env:USERPROFILE\Downloads"
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
-            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\kali-linux-2024.1.iso"
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\kali-linux-2024.1-installer-netinst-amd64.iso"
         }
     }
     "5" {
-        Download-ISO -url "https://developers.redhat.com/content-gateway/file/rhel/Red_Hat_Enterprise_Linux_9.3/rhel-9.3-x86_64-boot.iso" -outputPath "$env:USERPROFILE\Downloads\rhel-9.3-x86_64-boot.iso"
+        Download-ISO -url "https://developers.redhat.com/content-gateway/file/rhel/Red_Hat_Enterprise_Linux_9.3/rhel-9.3-x86_64-boot.iso" -outputPath "$env:USERPROFILE\Downloads"
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
             Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\rhel-9.3-x86_64-boot.iso"

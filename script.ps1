@@ -1,10 +1,3 @@
-# TO DO
-# 1) Fix so that the script actually creates a hard drive
-# 2) confirm that the size menu works.  ie: if i pick 100gb, i should see a 100gb disk
-# 3) once 1 & 2 are done, test across all ISOS on the menu
-#
-
-
 # Function to display menu and get user choice
 function Show-SizeMenu {
     Clear-Host

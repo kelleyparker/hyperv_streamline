@@ -14,16 +14,32 @@ function Show-SizeMenu {
     Write-Host "3) 150GB"
     Write-Host "4) 200GB"
     Write-Host "5) 250GB"
+    Write-Host "6) 300GB"
+    Write-Host "7) 350GB"
+    Write-Host "8) 400GB"
+    Write-Host "9) 450GB"
+    Write-Host "10) 500GB"
+    Write-Host "11) 550GB"
+    Write-Host "12) 600GB"
     $choice = Read-Host "Enter your choice"
     switch ($choice) {
-        "1" { return "50GB" }
-        "2" { return "100GB" }
-        "3" { return "150GB" }
-        "4" { return "200GB" }
-        "5" { return "250GB" }
-        default { Write-Host "Invalid choice. Defaulting to 50GB."; return "50GB" }
+        "1" { return 50GB }
+        "2" { return 100GB }
+        "3" { return 150GB }
+        "4" { return 200GB }
+        "5" { return 250GB }
+        "6" { return 300GB }
+        "7" { return 350GB }
+        "8" { return 400GB }
+        "9" { return 450GB }
+        "10" { return 500GB }
+        "11" { return 550GB }
+        "12" { return 600GB }
+        default { Write-Host "Invalid choice. Defaulting to 50GB."; return 50GB }
     }
 }
+
+
 
 # Function to display menu and get user choice
 function Show-Menu {
@@ -150,4 +166,11 @@ switch ($choice) {
     }
 }
 
-Start-VM -Name $vmName
+$vmState = Get-VM -Name $vmName | Select-Object -ExpandProperty State
+if ($vmState -ne "Running") {
+    Start-VM -Name $vmName
+}
+
+Write-Host "================================================"
+Write-Host "-----> Warning: Secure Boot is disabled. <------"
+Write-Host "================================================"

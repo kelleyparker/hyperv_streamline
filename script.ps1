@@ -41,6 +41,8 @@ function Show-SizeMenu {
 
 
 
+
+
 # Function to display menu and get user choice
 function Show-Menu {
     Clear-Host
@@ -49,6 +51,11 @@ function Show-Menu {
     Write-Host "2) Debian 12.5"
     Write-Host "3) Fedora Server 39"
     Write-Host "4) Kali Linux 2024.1"
+    Write-Host "5) Fedora 39 Network Installer"
+    Write-Host "6) Fedora 39 Workstation"
+    Write-Host "7) Ubuntu Desktop 22.04.4"
+    Write-Host "8) Ubuntu Desktop 23.10.1"
+    Write-Host "9) Fedora CoreOS 39"
     Write-Host "Q) Quit"
     Write-Host ""
     $choice = Read-Host "Enter your choice"
@@ -61,11 +68,13 @@ function Download-ISO {
         [string]$url,
         [string]$outputPath
     )
+    
     if (-not (Test-Path $outputPath)) {
+        Write-Host "Downloading ISO. Please be patient, this may take several minutes..."
         try {
             $webClient = New-Object System.Net.WebClient
             $webClient.DownloadFile($url, $outputPath)
-            Write-Host "Downloading $($outputPath.Split('\')[-1])..."
+            Write-Host "Download completed: $($outputPath.Split('\')[-1])"
         }
         catch {
             Write-Host "Error downloading the ISO: $_"
@@ -76,6 +85,7 @@ function Download-ISO {
     }
 }
 
+
 # Function to create a Hyper-V VM from the downloaded ISO
 function Create-HyperVVM {
     param (
@@ -83,11 +93,16 @@ function Create-HyperVVM {
     )
     $global:vmName = Read-Host "Enter the name for the Hyper-V virtual machine"
 
-    $ramChoice = Read-Host "Enter the amount of RAM for the VM (1GB, 2GB, or 4GB)"
+    $ramChoice = Read-Host "Enter the amount of RAM for the VM (1GB, 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, or 8GB)"
     $ram = switch ($ramChoice) {
         "1GB" {1GB}
         "2GB" {2GB}
+        "3GB" {3GB}
         "4GB" {4GB}
+        "5GB" {5GB}
+        "6GB" {6GB}
+        "7GB" {7GB}
+        "8GB" {8GB}
         default {Write-Host "Invalid RAM choice. Setting to 1GB."; 1GB}
     }
     $cpuCores = 2
@@ -156,6 +171,41 @@ switch ($choice) {
         $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
         if ($createVM -eq "Y") {
             Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\kali-linux-2024.1-installer-netinst-amd64.iso"
+        }
+    }
+    "5" {
+        Download-ISO -url "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-39-1.5.iso" -outputPath "$env:USERPROFILE\Downloads\fedora-network-installer-39.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\fedora-network-installer-39.iso"
+        }
+    }
+    "6" {
+        Download-ISO -url "https://download.fedoraproject.org/pub/fedora/linux/releases/39/Workstation/x86_64/iso/Fedora-Workstation-Live-x86_64-39-1.5.iso" -outputPath "$env:USERPROFILE\Downloads\fedora-workstation-39.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\fedora-workstation-39.iso"
+        }
+    }
+    "7" {
+        Download-ISO -url "https://releases.ubuntu.com/22.04.4/ubuntu-22.04.4-desktop-amd64.iso" -outputPath "$env:USERPROFILE\Downloads\ubuntu-desktop-22.04.4.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\ubuntu-desktop-22.04.4.iso"
+        }
+    }
+    "8" {
+        Download-ISO -url "https://releases.ubuntu.com/23.10.1/ubuntu-23.10.1-desktop-amd64.iso" -outputPath "$env:USERPROFILE\Downloads\ubuntu-desktop-23.10.1.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\ubuntu-desktop-23.10.1.iso"
+        }
+    }
+    "9" {
+        Download-ISO -url "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/39.20240322.3.1/x86_64/fedora-coreos-39.20240322.3.1-live.x86_64.iso" -outputPath "$env:USERPROFILE\Downloads\coreos-39.iso"
+        $createVM = Read-Host "Do you want to create a Hyper-V VM with this ISO? (Y/N)"
+        if ($createVM -eq "Y") {
+            Create-HyperVVM -isoPath "$env:USERPROFILE\Downloads\coreos-39.iso"
         }
     }
     "Q" {
